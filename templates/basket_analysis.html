@@ -1,0 +1,157 @@
+{% extends "base.html" %} {% block content %}
+<div class="container mt-4">
+  <h1>Basket Analysis (Market Basket Analysis)</h1>
+
+  <!-- Top Products Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h3>Top Purchased Products</h3>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <table class="table table-striped" id="topProductsTable">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Purchase Count</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Top products will be inserted here -->
+            </tbody>
+          </table>
+        </div>
+        <div class="col-md-6">
+          <canvas id="topProductsChart" width="400" height="300"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Association Rules Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h3>Product Association Rules</h3>
+      <p class="text-muted">
+        These rules show which products are commonly purchased together
+      </p>
+    </div>
+    <div class="card-body">
+      <table class="table table-bordered" id="rulesTable">
+        <thead>
+          <tr>
+            <th>If Customer Buys</th>
+            <th>They Also Buy</th>
+            <th>Support</th>
+            <th>Confidence</th>
+            <th>Lift</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Rules will be inserted here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // Fetch basket analysis data
+  fetch("/basket_analysis_data")
+    .then((response) => response.json())
+    .then((data) => {
+      // 1. Handle association rules
+      const rulesBody = document.querySelector("#rulesTable tbody");
+      if (data.rules && data.rules.length > 0) {
+        rulesBody.innerHTML = "";
+        data.rules.forEach((rule) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+                    <td>${rule.antecedents.join(", ")}</td>
+                    <td>${rule.consequents.join(", ")}</td>
+                    <td>${rule.support}</td>
+                    <td>${rule.confidence}</td>
+                    <td>${rule.lift}</td>
+                `;
+          rulesBody.appendChild(row);
+        });
+      } else {
+        rulesBody.innerHTML =
+          '<tr><td colspan="5" class="text-center">No association rules found. This could be due to insufficient purchase data or low co-occurrence patterns.</td></tr>';
+      }
+
+      // 2. Handle top products
+      const topProductsBody = document.querySelector("#topProductsTable tbody");
+      if (data.top_products && data.top_products.length > 0) {
+        topProductsBody.innerHTML = "";
+        data.top_products.forEach((product) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+                    <td>${product.commodity}</td>
+                    <td>${product.count}</td>
+                `;
+          topProductsBody.appendChild(row);
+        });
+
+        // Create chart for top products
+        const ctx = document
+          .getElementById("topProductsChart")
+          .getContext("2d");
+        new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: data.top_products.slice(0, 10).map((p) => p.commodity),
+            datasets: [
+              {
+                label: "Purchase Count",
+                data: data.top_products.slice(0, 10).map((p) => p.count),
+                backgroundColor: [
+                  "#FF6384",
+                  "#36A2EB",
+                  "#FFCE56",
+                  "#4BC0C0",
+                  "#9966FF",
+                  "#FF9F40",
+                  "#8BC34A",
+                  "#607D8B",
+                  "#E91E63",
+                  "#3F51B5",
+                ],
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            indexAxis: "y", // Horizontal bar chart
+            plugins: {
+              title: {
+                display: true,
+                text: "Most Frequently Purchased Products",
+              },
+              legend: {
+                display: false,
+              },
+            },
+          },
+        });
+      } else {
+        topProductsBody.innerHTML =
+          '<tr><td colspan="2" class="text-center">No product data available</td></tr>';
+      }
+    })
+    .catch((err) => {
+      console.error("Error fetching basket analysis data:", err);
+      document.querySelector("#rulesTable tbody").innerHTML =
+        '<tr><td colspan="5" class="text-center">Error loading rules: ' +
+        err.message +
+        "</td></tr>";
+      document.querySelector("#topProductsTable tbody").innerHTML =
+        '<tr><td colspan="2" class="text-center">Error loading product data</td></tr>';
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Sales Analytics</h1>
+
+    <!-- Sales Trends Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>Sales Trends</h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h3>Daily Sales</h3>
+                    <canvas id="dailySales"></canvas>
+                </div>
+                <div class="col-md-6">
+                    <h3>Weekly Sales</h3>
+                    <canvas id="weeklySales"></canvas>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h3>Monthly Sales Trend</h3>
+                    <canvas id="monthlySales"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue Analysis Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>Revenue Analysis</h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h3>Revenue by Department</h3>
+                    <canvas id="revenueByDepartment"></canvas>
+                </div>
+                <div class="col-md-6">
+                    <h3>Average Transaction Value</h3>
+                    <canvas id="avgTransactionValue"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Basket Analysis Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>Basket Analysis</h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h3>Average Basket Size</h3>
+                    <canvas id="avgBasketSize"></canvas>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h3>Basket Value Distribution</h3>
+                    <canvas id="basketValueDistribution"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Function to create charts
+    function createChart(canvasId, data) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        new Chart(ctx, data);
+    }
+
+    // Load data from the server
+    fetch('/sales_analytics_data')
+        .then(response => response.json())
+        .then(data => {
+            // Create sales trends charts
+            createChart('dailySales', data.dailySales);
+            createChart('weeklySales', data.weeklySales);
+            createChart('monthlySales', data.monthlySales);
+
+            // Create revenue analysis charts
+            createChart('revenueByDepartment', data.revenueByDepartment);
+            createChart('avgTransactionValue', data.avgTransactionValue);
+
+            // Create basket analysis charts
+            createChart('avgBasketSize', data.avgBasketSize);
+            createChart('basketValueDistribution', data.basketValueDistribution);
+        })
+        .catch(error => console.error('Error loading analytics data:', error));
+</script>
+{% endblock %} 

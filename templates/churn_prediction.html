@@ -1,0 +1,402 @@
+{% extends "base.html" %} {% block content %}
+<div class="container mt-4">
+  <h1 class="mb-4">Churn Prediction Analysis</h1>
+
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header">
+          <h3>Customer Risk Distribution</h3>
+        </div>
+        <div class="card-body">
+          <canvas id="riskDistributionChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header">
+          <h3>Retention Strategy Recommendations</h3>
+        </div>
+        <div class="card-body">
+          <h5>For High Risk Customers:</h5>
+          <ul>
+            <li>Send personalized "We Miss You" emails</li>
+            <li>Offer exclusive discounts on previously purchased items</li>
+            <li>Implement loyalty program benefits</li>
+          </ul>
+
+          <h5>For Medium Risk Customers:</h5>
+          <ul>
+            <li>Targeted product recommendations</li>
+            <li>Seasonal promotions</li>
+            <li>Request feedback to improve engagement</li>
+          </ul>
+
+          <h5>For Churned Customers:</h5>
+          <ul>
+            <li>Win-back campaign with special offers</li>
+            <li>Re-engagement survey with incentives</li>
+            <li>New product announcements</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <h3>High Risk Customer Analysis</h3>
+        </div>
+        <div class="card-body">
+          <table class="table table-striped table-sm" id="highRiskTable">
+            <thead>
+              <tr>
+                <th>Household ID</th>
+                <th>Weeks Since Last Purchase</th>
+                <th>Average Weeks Between Purchases</th>
+                <th>Average Spend</th>
+                <th>Spend Trend</th>
+                <th>Risk Level</th>
+                <th>Churn Risk Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- High risk customers will be inserted here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card h-100">
+        <div class="card-header">
+          <h3>Recency vs. Monetary Value</h3>
+        </div>
+        <div class="card-body">
+          <canvas id="recencyMonetaryChart"></canvas>
+          <div class="mt-3 text-center small text-muted">
+            Bubble size represents purchase frequency
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <h3>Demographic Patterns in At-Risk Customers</h3>
+        </div>
+        <div class="card-body">
+          <!-- Age Chart -->
+          <div class="row mb-4">
+            <div class="col-md-12">
+              <h5>Age Ranges</h5>
+              <canvas id="ageChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Income Chart -->
+          <div class="row mb-4">
+            <div class="col-md-12">
+              <h5>Income Ranges</h5>
+              <canvas id="incomeChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Loyalty Chart -->
+          <div class="row">
+            <div class="col-md-6">
+              <h5>Loyalty Distribution</h5>
+              <canvas id="loyaltyChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // Fetch churn prediction data
+  fetch("/churn_prediction_data")
+    .then((response) => response.json())
+    .then((data) => {
+      console.log("Churn prediction data:", data);
+
+      // 1. Risk Distribution Chart
+      const riskCtx = document
+        .getElementById("riskDistributionChart")
+        .getContext("2d");
+      new Chart(riskCtx, {
+        type: "pie",
+        data: {
+          labels: data.riskDistribution.labels,
+          datasets: [
+            {
+              data: data.riskDistribution.data,
+              backgroundColor: ["#4BC0C0", "#FFCE56", "#FF6384", "#9966FF"],
+              hoverOffset: 4,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: "Customer Churn Risk Distribution",
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const label = context.label || "";
+                  const value = context.raw || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = Math.round((value / total) * 100);
+                  return `${label}: ${value} (${percentage}%)`;
+                },
+              },
+            },
+          },
+        },
+      });
+
+      // 2. High Risk Customer Table
+      const tbody = document.querySelector("#highRiskTable tbody");
+      if (data.highRiskHouseholds && data.highRiskHouseholds.length > 0) {
+        tbody.innerHTML = "";
+        data.highRiskHouseholds.forEach((household) => {
+          const row = document.createElement("tr");
+          // Apply color coding based on risk level
+          if (household.status === "Churned") {
+            row.classList.add("table-danger");
+          } else if (household.status === "High Risk") {
+            row.classList.add("table-warning");
+          }
+
+          row.innerHTML = `
+                    <td>${household.household_id}</td>
+                    <td>${household.recency}</td>
+                    <td>${household.frequency}</td>
+                    <td>$${household.monetary.toFixed(2)}</td>
+                    <td>${
+                      household.trend >= 0
+                        ? "+" + household.trend.toFixed(2)
+                        : household.trend.toFixed(2)
+                    }</td>
+                    <td>${household.status}</td>
+                    <td>${household.churn_risk}%</td>
+                `;
+          tbody.appendChild(row);
+        });
+      } else {
+        tbody.innerHTML =
+          '<tr><td colspan="7" class="text-center">No high risk customers identified</td></tr>';
+      }
+
+      // 3. Recency vs Monetary Chart (Scatter Plot)
+      if (data.recencyVsMonetary && data.recencyVsMonetary.length > 0) {
+        const recencyMonetaryCtx = document
+          .getElementById("recencyMonetaryChart")
+          .getContext("2d");
+
+        // Group data by risk status
+        const datasets = {
+          "Low Risk": {
+            label: "Low Risk",
+            data: [],
+            backgroundColor: "rgba(75, 192, 192, 0.6)",
+            borderColor: "rgba(75, 192, 192, 1)",
+          },
+          "Medium Risk": {
+            label: "Medium Risk",
+            data: [],
+            backgroundColor: "rgba(255, 206, 86, 0.6)",
+            borderColor: "rgba(255, 206, 86, 1)",
+          },
+          "High Risk": {
+            label: "High Risk",
+            data: [],
+            backgroundColor: "rgba(255, 99, 132, 0.6)",
+            borderColor: "rgba(255, 99, 132, 1)",
+          },
+          Churned: {
+            label: "Churned",
+            data: [],
+            backgroundColor: "rgba(153, 102, 255, 0.6)",
+            borderColor: "rgba(153, 102, 255, 1)",
+          },
+        };
+
+        // Populate datasets
+        data.recencyVsMonetary.forEach((point) => {
+          if (datasets[point.risk]) {
+            datasets[point.risk].data.push({
+              x: point.x,
+              y: point.y,
+            });
+          }
+        });
+
+        // Create scatter chart
+        new Chart(recencyMonetaryCtx, {
+          type: "scatter",
+          data: {
+            datasets: Object.values(datasets),
+          },
+          options: {
+            responsive: true,
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: "Weeks Since Last Purchase",
+                },
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: "Average Spend ($)",
+                },
+              },
+            },
+            plugins: {
+              title: {
+                display: true,
+                text: "Recency vs Monetary Value by Risk Level",
+              },
+            },
+          },
+        });
+      }
+
+      // 4. Demographic Charts
+      if (data.demographicPatterns) {
+        // 4.1 Age Distribution Chart
+        if (data.demographicPatterns.age_range) {
+          const ageLabels = Object.keys(data.demographicPatterns.age_range);
+          const ageData = Object.values(data.demographicPatterns.age_range);
+
+          const ageCtx = document.getElementById("ageChart").getContext("2d");
+          new Chart(ageCtx, {
+            type: "bar",
+            data: {
+              labels: ageLabels,
+              datasets: [
+                {
+                  label: "At-Risk Customers",
+                  data: ageData,
+                  backgroundColor: "#FF6384",
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: "Count",
+                  },
+                },
+              },
+              plugins: {
+                legend: {
+                  display: false,
+                },
+              },
+            },
+          });
+        }
+
+        // 4.2 Income Distribution Chart
+        if (data.demographicPatterns.income_range) {
+          const incomeLabels = Object.keys(
+            data.demographicPatterns.income_range
+          );
+          const incomeData = Object.values(
+            data.demographicPatterns.income_range
+          );
+
+          const incomeCtx = document
+            .getElementById("incomeChart")
+            .getContext("2d");
+          new Chart(incomeCtx, {
+            type: "bar",
+            data: {
+              labels: incomeLabels,
+              datasets: [
+                {
+                  label: "At-Risk Customers",
+                  data: incomeData,
+                  backgroundColor: "#36A2EB",
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: "Count",
+                  },
+                },
+              },
+              plugins: {
+                legend: {
+                  display: false,
+                },
+              },
+            },
+          });
+        }
+
+        // 4.3 Loyalty Distribution Chart
+        if (data.demographicPatterns.loyalty) {
+          const loyaltyLabels = Object.keys(
+            data.demographicPatterns.loyalty
+          ).map((key) => (key === "Y" ? "Loyal" : "Non-Loyal"));
+          const loyaltyData = Object.values(data.demographicPatterns.loyalty);
+
+          const loyaltyCtx = document
+            .getElementById("loyaltyChart")
+            .getContext("2d");
+          new Chart(loyaltyCtx, {
+            type: "pie",
+            data: {
+              labels: loyaltyLabels,
+              datasets: [
+                {
+                  data: loyaltyData,
+                  backgroundColor: ["#4BC0C0", "#FF6384"],
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+            },
+          });
+        }
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching churn prediction data:", error);
+      document.querySelector("#riskDistributionChart").parentElement.innerHTML =
+        '<div class="alert alert-danger">Error loading churn prediction data</div>';
+    });
+</script>
+{% endblock %}

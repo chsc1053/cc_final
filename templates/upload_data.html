@@ -1,0 +1,216 @@
+{% extends "base.html" %} {% block content %}
+<div class="container mt-4">
+  <h1 class="mb-4">Upload Data Files</h1>
+
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <h3>Upload CSV Files</h3>
+        </div>
+        <div class="card-body">
+          <div id="statusMessage"></div>
+
+          <form id="uploadForm" enctype="multipart/form-data">
+            <div class="form-group mb-3">
+              <label for="householdsFile"
+                ><strong>Households Data (400_households.csv):</strong></label
+              >
+              <input
+                type="file"
+                class="form-control"
+                id="householdsFile"
+                name="households"
+                accept=".csv"
+              />
+              <small class="form-text text-muted"
+                >Expected columns: HSHD_NUM, L, AGE_RANGE, MARITAL,
+                INCOME_RANGE, HOMEOWNER, HSHD_COMPOSITION, HH_SIZE,
+                CHILDREN</small
+              >
+            </div>
+
+            <div class="form-group mb-3">
+              <label for="transactionsFile"
+                ><strong
+                  >Transactions Data (400_transactions.csv):</strong
+                ></label
+              >
+              <input
+                type="file"
+                class="form-control"
+                id="transactionsFile"
+                name="transactions"
+                accept=".csv"
+              />
+              <small class="form-text text-muted"
+                >Expected columns: BASKET_NUM, HSHD_NUM, PURCHASE_, PRODUCT_NUM,
+                SPEND, UNITS, STORE_R, WEEK_NUM, YEAR</small
+              >
+            </div>
+
+            <div class="form-group mb-3">
+              <label for="productsFile"
+                ><strong>Products Data (400_products.csv):</strong></label
+              >
+              <input
+                type="file"
+                class="form-control"
+                id="productsFile"
+                name="products"
+                accept=".csv"
+              />
+              <small class="form-text text-muted"
+                >Expected columns: PRODUCT_NUM, DEPARTMENT, COMMODITY, BRAND_TY,
+                NATURAL_ORGANIC_FLAG</small
+              >
+            </div>
+
+            <div class="d-grid gap-2">
+              <button type="button" id="uploadButton" class="btn btn-primary">
+                Upload and Replace Data
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <h3>Current Data Status</h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4 text-center">
+              <h4>Households</h4>
+              <div id="householdCount" class="display-4">-</div>
+            </div>
+            <div class="col-md-4 text-center">
+              <h4>Transactions</h4>
+              <div id="transactionCount" class="display-4">-</div>
+            </div>
+            <div class="col-md-4 text-center">
+              <h4>Products</h4>
+              <div id="productCount" class="display-4">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Check current data status
+    updateDataStatus();
+
+    // Upload button event handler
+    document
+      .getElementById("uploadButton")
+      .addEventListener("click", function () {
+        uploadData();
+      });
+  });
+
+  function updateDataStatus() {
+    fetch("/check_data")
+      .then((response) => response.json())
+      .then((data) => {
+        document.getElementById("householdCount").textContent = data.households;
+        document.getElementById("transactionCount").textContent =
+          data.transactions;
+        document.getElementById("productCount").textContent = data.products;
+      })
+      .catch((error) => {
+        console.error("Error fetching data status:", error);
+      });
+  }
+
+  function uploadData() {
+    // Get selected files
+    const householdsFile = document.getElementById("householdsFile").files[0];
+    const transactionsFile =
+      document.getElementById("transactionsFile").files[0];
+    const productsFile = document.getElementById("productsFile").files[0];
+
+    // Validate filenames
+    if (householdsFile && householdsFile.name !== "400_households.csv") {
+      showStatus("Households file must be named 400_households.csv", "danger");
+      return;
+    }
+
+    if (transactionsFile && transactionsFile.name !== "400_transactions.csv") {
+      showStatus(
+        "Transactions file must be named 400_transactions.csv",
+        "danger"
+      );
+      return;
+    }
+
+    if (productsFile && productsFile.name !== "400_products.csv") {
+      showStatus("Products file must be named 400_products.csv", "danger");
+      return;
+    }
+
+    // Check if at least one file is selected
+    if (!householdsFile && !transactionsFile && !productsFile) {
+      showStatus("Please select at least one file to upload.", "warning");
+      return;
+    }
+
+    // Prepare form data
+    const formData = new FormData();
+    if (householdsFile) formData.append("households", householdsFile);
+    if (transactionsFile) formData.append("transactions", transactionsFile);
+    if (productsFile) formData.append("products", productsFile);
+
+    // Disable upload button and show loading message
+    document.getElementById("uploadButton").disabled = true;
+    showStatus("Uploading data... This may take a few minutes.", "info");
+
+    // Send files to server
+    fetch("/upload_data_process", {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data.success) {
+          showStatus(
+            "Data uploaded and database updated successfully!",
+            "success"
+          );
+          // Update data status counts
+          updateDataStatus();
+        } else {
+          showStatus(`Upload failed: ${data.message}`, "danger");
+        }
+      })
+      .catch((error) => {
+        showStatus(`Error during upload: ${error.message}`, "danger");
+      })
+      .finally(() => {
+        // Re-enable upload button
+        document.getElementById("uploadButton").disabled = false;
+      });
+  }
+
+  function showStatus(message, type) {
+    const statusDiv = document.getElementById("statusMessage");
+    statusDiv.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>`;
+  }
+</script>
+{% endblock %}

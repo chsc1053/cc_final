@@ -1,0 +1,154 @@
+{% extends "base.html" %} {% block content %}
+<style>
+  .household-column {
+    background-color: rgba(
+      147,
+      112,
+      219,
+      0.2
+    ); /* Light purple for household data */
+  }
+  .transaction-column {
+    background-color: rgba(
+      0,
+      128,
+      128,
+      0.2
+    ); /* Light teal for transaction data */
+  }
+  .product-column {
+    background-color: rgba(
+      255,
+      215,
+      0,
+      0.2
+    ); /* Light yellow for product data */
+  }
+  thead th.household-column {
+    background-color: rgba(147, 112, 219, 0.6); /* Darker purple for header */
+  }
+  thead th.transaction-column {
+    background-color: rgba(0, 128, 128, 0.6); /* Darker teal for header */
+  }
+  thead th.product-column {
+    background-color: rgba(255, 215, 0, 0.6); /* Darker yellow for header */
+  }
+</style>
+
+<div class="container">
+  <div class="row mb-4">
+    <div class="col">
+      <h2>Sample Data View</h2>
+      <p class="text-muted">
+        Displaying sample data for household #10 (showing first 10 rows only)
+      </p>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title">Data Source Legend</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-around">
+            <div class="p-2 household-column">
+              <strong>Household Data</strong> (400_households.csv)
+            </div>
+            <div class="p-2 transaction-column">
+              <strong>Transaction Data</strong> (400_transactions.csv)
+            </div>
+            <div class="p-2 product-column">
+              <strong>Product Data</strong> (400_products.csv)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title">Household #10 Data</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover">
+              <thead>
+                <tr>
+                  <th class="household-column">Household #</th>
+                  <th class="transaction-column">Basket #</th>
+                  <th class="transaction-column">Date</th>
+                  <th class="transaction-column">Product #</th>
+                  <th class="product-column">Department</th>
+                  <th class="product-column">Commodity</th>
+                  <th class="transaction-column">Spend</th>
+                  <th class="transaction-column">Units</th>
+                  <th class="transaction-column">Region</th>
+                  <th class="transaction-column">Week #</th>
+                  <th class="transaction-column">Year</th>
+                  <th class="household-column">Loyalty</th>
+                  <th class="household-column">Age Range</th>
+                  <th class="household-column">Marital Status</th>
+                  <th class="household-column">Income Range</th>
+                  <th class="household-column">Homeowner</th>
+                  <th class="household-column">HH Composition</th>
+                  <th class="household-column">HH Size</th>
+                  <th class="household-column">Children</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if combined_data %} {% for item in combined_data %}
+                <tr>
+                  <td class="household-column">{{ item.hshd_num }}</td>
+                  <td class="transaction-column">{{ item.basket_num }}</td>
+                  <td class="transaction-column">
+                    {{ item.purchase_date.strftime('%Y-%m-%d') }}
+                  </td>
+                  <td class="transaction-column">{{ item.product_num }}</td>
+                  <td class="product-column">{{ item.department }}</td>
+                  <td class="product-column">{{ item.commodity }}</td>
+                  <td class="transaction-column">
+                    ${{ "%.2f"|format(item.spend) }}
+                  </td>
+                  <td class="transaction-column">{{ item.units }}</td>
+                  <td class="transaction-column">{{ item.store_r }}</td>
+                  <td class="transaction-column">{{ item.week_num }}</td>
+                  <td class="transaction-column">{{ item.year }}</td>
+                  <td class="household-column">{{ household.loyalty_flag }}</td>
+                  <td class="household-column">{{ household.age_range }}</td>
+                  <td class="household-column">{{ household.marital }}</td>
+                  <td class="household-column">{{ household.income_range }}</td>
+                  <td class="household-column">{{ household.homeowner }}</td>
+                  <td class="household-column">
+                    {{ household.hshd_composition }}
+                  </td>
+                  <td class="household-column">{{ household.hh_size }}</td>
+                  <td class="household-column">{{ household.children }}</td>
+                </tr>
+                {% endfor %} {% else %}
+                <tr>
+                  <td colspan="19" class="text-center">
+                    No data found for household #10
+                  </td>
+                </tr>
+                {% endif %}
+              </tbody>
+            </table>
+
+            {% if combined_data %}
+            <div class="alert alert-warning mt-3">
+              <i class="bi bi-info-circle"></i> Note: Only showing the first 10
+              rows of data for this sample view.
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

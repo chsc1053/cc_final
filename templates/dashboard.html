@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Retail Analytics Dashboard</h2>
+            <p class="text-muted">Welcome, {{ current_user.username }}!</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Data Analysis Section -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title">Data Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Explore and analyze retail data.</p>
+                    <div class="list-group">
+                        <a href="{{ url_for('sample_data') }}" class="list-group-item list-group-item-action">
+                            Sample Data View
+                        </a>
+                        <a href="{{ url_for('search_data') }}" class="list-group-item list-group-item-action">
+                            Search Data
+                        </a>
+                        <a href="{{ url_for('upload_data') }}" class="list-group-item list-group-item-action">
+                            Upload New Data
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Dashboard Section -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title">Analytics Dashboard</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">View comprehensive analytics and visual insights.</p>
+                    <div class="list-group">
+                        <a href="{{ url_for('customer_analytics') }}" class="list-group-item list-group-item-action">
+                            Customer Analytics
+                        </a>
+                        <a href="{{ url_for('product_analytics') }}" class="list-group-item list-group-item-action">
+                            Product Analytics
+                        </a>
+                        <a href="{{ url_for('sales_analytics') }}" class="list-group-item list-group-item-action">
+                            Sales Analytics
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Machine Learning Section -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title">Machine Learning</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Predictive analytics and machine learning models.</p>
+                    <div class="list-group">
+                        <a href="{{ url_for('basket_analysis') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-shopping-basket"></i> Basket Analysis
+                        </a>
+                        <a href="{{ url_for('churn_prediction') }}" class="list-group-item list-group-item-action">
+                            Churn Prediction
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats Section -->
+    <div class="row mt-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Quick Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title">Total Households</h6>
+                                    <h3 class="card-text">{{ total_households }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title">Total Transactions</h6>
+                                    <h3 class="card-text">{{ total_transactions }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title">Total Products</h6>
+                                    <h3 class="card-text">{{ total_products }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title">Total Revenue</h6>
+                                    <h3 class="card-text">${{ "%.2f"|format(total_revenue) }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

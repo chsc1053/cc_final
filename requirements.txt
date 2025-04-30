@@ -1,0 +1,14 @@
+flask
+flask-sqlalchemy
+pandas
+numpy
+scikit-learn
+python-dotenv
+flask-login
+flask-wtf
+plotly
+dash
+dash-bootstrap-components
+azure-storage-blob
+azure-identity
+mlxtend
